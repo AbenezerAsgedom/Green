@@ -59,21 +59,21 @@ const showSelectedContents = () => {
             cartModalBody.classList.add('col-md-6');
             cartModalBody.classList.remove('col-md-12');
             cartItemsHTML += `
-        <div class="selected-card shadow card mb-3">
-          <div class="row g-0">
-            <div class="col-md-8">
-              <div class="card-body">
-                <h6 class="card-title">${cardTitle}</h6>
-                <p class="card-text">${cardBodyHTML}</p>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <button type="button" class="btn mt-1 me-1 cancel-btn position-absolute top-0 end-0">
-                <i class="fas fa-times text-danger" style='font-size:20px;'></i>
-              </button>
-            </div>
-          </div>
-        </div>`;
+              <div class="selected-card shadow card mb-3">
+                <div class="row g-0">
+                  <div class="col-md-8">
+                    <div class="card-body text-start">
+                      <h6 class="card-title lead" style='font-size:16px;'>Name: ${cardTitle}</h6>
+                      <h6 class="card-title lead" style='font-size:16px;'>Price: $${price}</h6>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <button type="button" class="btn mt-1 me-1 cancel-btn position-absolute top-0 end-0">
+                      <i class="fas fa-times text-danger" style='font-size:20px;'></i>
+                    </button>
+                  </div>
+                </div>
+              </div>`;
         });
 
         const cartSummary = document.querySelector('.Summary');
