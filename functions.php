@@ -161,7 +161,9 @@ function fetchAccount($conn)
 function enrolStudent($UID, $courses, $conn2)
 {
     try {
+        $conn2->begin_transaction();
         $courseIds = json_decode($courses, true);
+
 
         foreach ($courseIds as $courseId) {
             $enrolstartdate = time();
@@ -170,22 +172,42 @@ function enrolStudent($UID, $courses, $conn2)
             $role = 5;  // ROLE OF STUDENT IN MOODLE DB
             $enrol = 'manual';
 
-            $query = 'INSERT INTO mdlwj_enrol (courseid, enrol, roleid, enrolenddate) VALUES (?, ?, ?, ?)';
+            // Insert enrolment record
+            $query = "INSERT INTO mdlwj_enrol (courseid, enrol, roleid, enrolenddate) VALUES (?, ?, ?, ?)";
             $stmt = $conn2->prepare($query);
+            if ($stmt === false) {
+                // handle prepare error
+                throw new Exception($conn2->error);
+            }
             $stmt->bind_param("isii", $courseId, $enrol, $role, $timestamp);
             if (!$stmt->execute()) {
                 echo "Error: enrol insert failed: " . $stmt->error;
             }
             $last_id = $conn2->insert_id;
 
-            $stmt = $conn2->prepare("INSERT INTO mdlwj_user_enrolments (enrolid, userid, timestart, timeend, modifierid, timecreated, timemodified) VALUES (?, ?, UNIX_TIMESTAMP(), ?, 2, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())");
+            // Insert user's enrolment record
+            $query = "INSERT INTO mdlwj_user_enrolments (enrolid, userid, timestart, timeend, modifierid, timecreated, timemodified) VALUES (?, ?, UNIX_TIMESTAMP(), ?, 2, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())";
+            
+            $stmt = $conn2->prepare($query);
+            if ($stmt === false) {
+                // handle prepare error
+                throw new Exception($conn2->error);
+            }
+            
             $stmt->bind_param("iis", $last_id, $UID, $timestamp);
             if (!$stmt->execute()) {
                 echo "Error: user_enrolments insert failed: " . $stmt->error;
             }
 
+            // Select context ID
             $query = "SELECT * FROM mdlwj_context WHERE instanceid = ? AND contextlevel = 50";
+            
             $stmt = $conn2->prepare($query);
+            if ($stmt === false) {
+                // handle prepare error
+                throw new Exception($conn2->error);
+            }
+            
             $stmt->bind_param('i', $courseId);
             if (!$stmt->execute()) {
                 echo "Error: context select failed: " . $stmt->error;
@@ -201,11 +223,17 @@ function enrolStudent($UID, $courses, $conn2)
             $contextID = $row['id'];
 
             if ($contextID) {
+                // Assign the role to the user
                 $query = "INSERT INTO mdlwj_role_assignments (roleid, contextid, userid, timemodified) VALUES (?, ?, ?, ?)";
+                
                 $stmt = $conn2->prepare($query);
+                if ($stmt === false) {
+                    // handle prepare error
+                    throw new Exception($conn2->error);
+                }
                 $roleID = 5;
                 $timenow = time();
-                $stmt->bind_param("iiis", $roleID, $contextID, $moodleuserId, $timenow);
+                $stmt->bind_param("iiis", $roleID, $contextID, $UID, $timenow);
                 if (!$stmt->execute()) {
                     throw new Exception("Error executing query: " . $stmt->error);
                 }
@@ -214,6 +242,7 @@ function enrolStudent($UID, $courses, $conn2)
                 throw new Exception("Context ID not found");
             }
         }
+        $conn2->commit();
     } catch (Exception $e) {
         echo "Error: " . $e->getMessage();
     }
