@@ -44,9 +44,14 @@ function session()
     }
 }
 
-function redirectUserToLogin($session)
+/**
+ * Redirect user to login if session is not active.
+ *
+ * @param bool $session description
+ */
+function redirectUserToLogin($trueSession)
 {
-    if (!$session) {
+    if (!$trueSession) {
         // Output the Bootstrap modal when the user is not allowed on the page
         echo '
         <head>
@@ -62,7 +67,7 @@ function redirectUserToLogin($session)
                             <p>You are not allowed to access this page.</p>
                         </div>
                         <div class="modal-footer">
-                            <a href="http://localhost/moodle/login/index.php" class="btn btn-primary">Go to Login</a>
+                            <a href="http://courses.green.et" class="btn btn-primary">Go to Login</a>
                         </div>
                     </div>
                 </div>
@@ -78,5 +83,119 @@ function redirectUserToLogin($session)
         ';
 
         exit();
+    }
+}
+
+/**
+ * Fetches the user's account information from the database based on the session ID.
+ *
+ * @param object $conn The database connection object
+ * @throws Exception if the account information cannot be retrieved
+ * @return array An array containing the user's full name and user ID
+ */
+function fetchAccount($conn)
+{
+    require_once('../config.php');
+    $session = session_id();
+    try {
+        // Retrieve the user's ID from the database based on the session ID
+        $query = 'SELECT userid FROM mdlwj_sessions WHERE sid = ? ';
+
+        $stms = $conn->prepare($query);
+        if ($stms === false) {
+            throw new Exception($conn->error);
+        }
+
+        $stms->bind_param('s', $session);
+        if (!$stms->execute()) {
+            throw new Exception($stms->error);
+        }
+
+        $result = $stms->get_result();
+        if ($result === false) {
+            throw new Exception($conn->error);
+        }
+
+        $row = $result->fetch_assoc();
+        if ($row === null) {
+            throw new Exception("The user's session cannot be found in the database.");
+        }
+
+        $UID = $row['userid'];
+
+        // Retrieve the user's information from the database based on the user's ID
+        $query = 'SELECT * FROM mdlwj_users WHERE id = ?';
+
+        $stmt = $conn->prepare($query);
+        if ($stmt === false) {
+            throw new Exception($conn->error);
+        }
+
+        $stmt->bind_param('i', $UID);
+        if (!$stmt->execute()) {
+            throw new Exception($stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        if ($result === false) {
+            throw new Exception($conn->error);
+        }
+
+        $row = $result->fetch_assoc();
+        if ($row === null) {
+            throw new Exception("The user's account information cannot be found in the database.");
+        }
+
+        $fullname = $row['firstname'] . ' ' . $row['lastname'];
+
+        return array(
+            'fullname' => $fullname,
+            'UID' => $UID
+        );
+
+
+    } catch (Exception $e) {
+        echo "Account information cannot be retrieved: " . $e->getMessage();
+    }
+
+}
+
+
+function enrolStudent($UID, $courses, $conn2)
+{
+    try {
+        $courseIds = json_decode($courses, true);
+
+        foreach ($courseIds as $courseId) {
+            $enrolstartdate = time();
+            $timestamp = strtotime('+3 months', $enrolstartdate);
+
+            $role = 5;  // ROLE OF STUDENT IN MOODLE DB
+            $enrol = 'manual';
+
+            $query = 'INSERT INTO mdlwj_enrol (courseid, enrol, roleid, enrolenddate) VALUES (?, ?, ?, ?)';
+            $stmt = $conn2->prepare($query);
+            $stmt->bind_param("isii", $courseId, $enrol, $role, $timestamp);
+            if (!$stmt->execute()) {
+                echo "Error: enrol insert failed: " . $stmt->error;
+            }
+            $last_id = $conn2->insert_id;
+
+            $stmt = $conn2->prepare("INSERT INTO mdlwj_user_enrolments (enrolid, userid, timestart, timeend, modifierid, timecreated, timemodified) VALUES (?, ?, UNIX_TIMESTAMP(), ?, 2, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())");
+            $stmt->bind_param("iis", $last_id, $UID, $timestamp);
+            if (!$stmt->execute()) {
+                echo "Error: user_enrolments insert failed: " . $stmt->error;
+            }
+
+            $query = "SELECT * FROM mdlwj_context WHERE instanceid = ? AND contextlevel = 50";
+            $stmt = $conn2->prepare($query);
+            $stmt->bind_param('i', $courseId);
+            if (!$stmt->execute()) {
+                echo "Error: context select failed: " . $stmt->error;
+            }
+
+        }
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage();
     }
 }
