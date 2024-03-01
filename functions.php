@@ -158,12 +158,20 @@ function fetchAccount($conn)
 }
 
 
+/**
+ * Enrols a student in the specified courses.
+ *
+ * @param mixed $UID The unique identifier of the student
+ * @param string $courses A JSON string representing the list of course IDs
+ * @param object $conn2 The database connection object
+ * @throws Exception Exception message
+ * @return bool
+ */
 function enrolStudent($UID, $courses, $conn2)
 {
     try {
         $conn2->begin_transaction();
         $courseIds = json_decode($courses, true);
-
 
         foreach ($courseIds as $courseId) {
             $enrolstartdate = time();
@@ -182,35 +190,39 @@ function enrolStudent($UID, $courses, $conn2)
             $stmt->bind_param("isii", $courseId, $enrol, $role, $timestamp);
             if (!$stmt->execute()) {
                 echo "Error: enrol insert failed: " . $stmt->error;
+                return false;
             }
+
             $last_id = $conn2->insert_id;
 
             // Insert user's enrolment record
             $query = "INSERT INTO mdlwj_user_enrolments (enrolid, userid, timestart, timeend, modifierid, timecreated, timemodified) VALUES (?, ?, UNIX_TIMESTAMP(), ?, 2, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())";
-            
+
             $stmt = $conn2->prepare($query);
             if ($stmt === false) {
                 // handle prepare error
                 throw new Exception($conn2->error);
             }
-            
+
             $stmt->bind_param("iis", $last_id, $UID, $timestamp);
             if (!$stmt->execute()) {
                 echo "Error: user_enrolments insert failed: " . $stmt->error;
+                return false;
             }
 
             // Select context ID
             $query = "SELECT * FROM mdlwj_context WHERE instanceid = ? AND contextlevel = 50";
-            
+
             $stmt = $conn2->prepare($query);
             if ($stmt === false) {
                 // handle prepare error
                 throw new Exception($conn2->error);
             }
-            
+
             $stmt->bind_param('i', $courseId);
             if (!$stmt->execute()) {
                 echo "Error: context select failed: " . $stmt->error;
+                return false;
             }
 
             $result1 = $stmt->get_result();
@@ -218,6 +230,7 @@ function enrolStudent($UID, $courses, $conn2)
             if (!$row) {
                 // Handle the case when the context is not found
                 throw new Exception("Context not found");
+                return false;
             }
 
             $contextID = $row['id'];
@@ -225,7 +238,7 @@ function enrolStudent($UID, $courses, $conn2)
             if ($contextID) {
                 // Assign the role to the user
                 $query = "INSERT INTO mdlwj_role_assignments (roleid, contextid, userid, timemodified) VALUES (?, ?, ?, ?)";
-                
+
                 $stmt = $conn2->prepare($query);
                 if ($stmt === false) {
                     // handle prepare error
@@ -236,14 +249,18 @@ function enrolStudent($UID, $courses, $conn2)
                 $stmt->bind_param("iiis", $roleID, $contextID, $UID, $timenow);
                 if (!$stmt->execute()) {
                     throw new Exception("Error executing query: " . $stmt->error);
+                    return false;
                 }
             } else {
                 // Handle the case when the context ID is not found
                 throw new Exception("Context ID not found");
+                return false;
             }
         }
         $conn2->commit();
+        return true;
     } catch (Exception $e) {
         echo "Error: " . $e->getMessage();
+        return false;
     }
 }
