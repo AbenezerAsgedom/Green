@@ -152,12 +152,9 @@ function fetchAccount($conn)
             'fullname' => $fullname,
             'UID' => $UID
         );
-
-
     } catch (Exception $e) {
         echo "Account information cannot be retrieved: " . $e->getMessage();
     }
-
 }
 
 
@@ -194,6 +191,28 @@ function enrolStudent($UID, $courses, $conn2)
                 echo "Error: context select failed: " . $stmt->error;
             }
 
+            $result1 = $stmt->get_result();
+            $row = $result1->fetch_assoc();
+            if (!$row) {
+                // Handle the case when the context is not found
+                throw new Exception("Context not found");
+            }
+
+            $contextID = $row['id'];
+
+            if ($contextID) {
+                $query = "INSERT INTO mdlwj_role_assignments (roleid, contextid, userid, timemodified) VALUES (?, ?, ?, ?)";
+                $stmt = $conn2->prepare($query);
+                $roleID = 5;
+                $timenow = time();
+                $stmt->bind_param("iiis", $roleID, $contextID, $moodleuserId, $timenow);
+                if (!$stmt->execute()) {
+                    throw new Exception("Error executing query: " . $stmt->error);
+                }
+            } else {
+                // Handle the case when the context ID is not found
+                throw new Exception("Context ID not found");
+            }
         }
     } catch (Exception $e) {
         echo "Error: " . $e->getMessage();
