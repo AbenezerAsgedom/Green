@@ -44,6 +44,39 @@ function session()
     }
 }
 
-function redirectUserToLogin($trueSession){
-    
+function redirectUserToLogin($session)
+{
+    if (!$session) {
+        // Output the Bootstrap modal when the user is not allowed on the page
+        echo '
+        <head>
+             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+            <div class="modal fade" id="notAllowedModal" tabindex="-1" aria-labelledby="notAllowedModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="notAllowedModalLabel">Access Denied</h5>
+                        </div>
+                        <div class="modal-body text-center text-danger lead">
+                            <p>You are not allowed to access this page.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="http://localhost/moodle/login/index.php" class="btn btn-primary">Go to Login</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+            <script>
+                $(document).ready(function() {
+                    $("#notAllowedModal").modal("show");
+                });
+            </script>
+        ';
+
+        exit();
+    }
 }
