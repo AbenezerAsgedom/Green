@@ -43,3 +43,7 @@ function session()
         throw new Exception("Account information cannot be retrieved: " . $e->getMessage());
     }
 }
+
+function redirectUserToLogin($trueSession){
+    
+}
