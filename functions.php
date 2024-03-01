@@ -2,14 +2,7 @@
 
 require_once('conncection.php');
 
-
-/**
- * Fetches user's moodle account information.
- *
- * @throws Exception if the account information cannot be retrieved
- * @return Account the fetched account
- */
-function fetchAccount()
+function session()
 {
     try {
         require_once('../config.php');
@@ -33,18 +26,13 @@ function fetchAccount()
         // Fetch the result
         $stmt->store_result();
 
-        // Check if the value exists
-        if ($stmt->num_rows > 0) {
-
-            $trueSession = true;
-        } else {
-            // No data found in the database, redirect the user to a specific URL
-            $trueSession = false;
-        }
+        $trueSession = ($stmt->num_rows > 0) ? true : false;
 
         // Close the statement and database connection
         $stmt->close();
         $conn->close();
+
+        return $trueSession;
     } catch (Exception $e) {
         throw new Exception("Account information cannot be retrieved: " . $e->getMessage());
     }
