@@ -2,6 +2,12 @@
 
 require_once('conncection.php');
 
+/**
+ * Retrieves the session information from the database and checks if the session is valid.
+ *
+ * @return boolean
+ * @throws Exception Account information cannot be retrieved: description of exception
+ */
 function session()
 {
     try {
