@@ -46,7 +46,6 @@ function session()
 
 /**
  * Redirect user to login if session is not active.
- *
  * @param bool $session description
  */
 function redirectUserToLogin($trueSession)
@@ -230,7 +229,6 @@ function enrolStudent($UID, $courses, $conn2)
             if (!$row) {
                 // Handle the case when the context is not found
                 throw new Exception("Context not found");
-                return false;
             }
 
             $contextID = $row['id'];
@@ -249,12 +247,10 @@ function enrolStudent($UID, $courses, $conn2)
                 $stmt->bind_param("iiis", $roleID, $contextID, $UID, $timenow);
                 if (!$stmt->execute()) {
                     throw new Exception("Error executing query: " . $stmt->error);
-                    return false;
                 }
             } else {
                 // Handle the case when the context ID is not found
                 throw new Exception("Context ID not found");
-                return false;
             }
         }
         $conn2->commit();
@@ -262,5 +258,63 @@ function enrolStudent($UID, $courses, $conn2)
     } catch (Exception $e) {
         echo "Error: " . $e->getMessage();
         return false;
+    }
+}
+
+
+
+
+function fetchCourses($UID, $conn2)
+{
+    try {
+        $data = null;
+        $catID = null;
+        // Get the department of the user
+        $field = 'Deparment';
+        $query = "SELECT mdlwj_user_info_data.data FROM mdlwj_user_info_data
+            JOIN mdlwj_user_field ON mdlwj_user_field.id = mdlwj_user_info_data.fieldid
+            WHERE userid = ? AND mdlwj_user_field = ?";
+        $stmt = $conn2->prepare($query);
+        if ($stmt === false) {
+            throw new Exception($conn2->error);
+        }
+        $stmt->bind_param("is", $UID, $field);
+        $stmt->execute();
+        $stmt->bind_result($data);
+        $stmt->fetch();
+        $stmt->close();
+
+        // Get the ID of the category with the same ID number as the department
+        $query = "SELECT id FROM mdlwj_course_categories WHERE idnumber = ?";
+        $stmt = $conn2->prepare($query);
+        if ($stmt === false) {
+            throw new Exception($conn2->error);
+        }
+        $stmt->bind_param("s", $data);
+        $stmt->execute();
+        $stmt->bind_result($catID);
+        $stmt->fetch();
+        $stmt->close();
+
+        $query = "SELECT * FROM mdlwj_course WHERE categoryid = ? AND id NOT IN (
+            SELECT enrol.courseid
+            FROM mdlwj_enrol
+            JOIN mdlwj_user_enrolments ON mdlwj_user_enrolments.enrolid = mdlwj_enrol.id
+            JOIN mdlwj_course ON mdlwj_course.id = mdlwj_enrol.courseid
+            WHERE categoryid = ? AND mdlwj_user_enrolments.userid = ?
+        )";
+        $stmt = $conn2->prepare($query);
+        if ($stmt === false) {
+            throw new Exception($conn2->error);
+        }
+        $stmt->bind_param("iii", $catID, $catID, $UID);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            
+        }
+        $stmt->close();
+    } catch (Exception $e) {
+        // Handle exception
     }
 }
