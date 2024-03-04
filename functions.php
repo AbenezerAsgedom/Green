@@ -4,7 +4,6 @@ require_once('conncection.php');
 
 /**
  * Retrieves the session information from the database and checks if the session is valid.
- *
  * @return boolean
  * @throws Exception Account information cannot be retrieved: description of exception
  */
@@ -87,7 +86,6 @@ function redirectUserToLogin($trueSession)
 
 /**
  * Fetches the user's account information from the database based on the session ID.
- *
  * @param object $conn The database connection object
  * @throws Exception if the account information cannot be retrieved
  * @return array An array containing the user's full name and user ID
@@ -156,10 +154,8 @@ function fetchAccount($conn)
     }
 }
 
-
 /**
  * Enrols a student in the specified courses.
- *
  * @param mixed $UID The unique identifier of the student
  * @param string $courses A JSON string representing the list of course IDs
  * @param object $conn2 The database connection object
@@ -261,9 +257,13 @@ function enrolStudent($UID, $courses, $conn2)
     }
 }
 
-
-
-
+/**
+ * Fetches courses for a user based on their department.
+ * @param int $UID The user ID
+ * @param object $conn2 The database connection
+ * @throws Exception If an error occurs during database operations
+ * @return void
+ */
 function fetchCourses($UID, $conn2)
 {
     try {
@@ -310,11 +310,43 @@ function fetchCourses($UID, $conn2)
         $stmt->bind_param("iii", $catID, $catID, $UID);
         $stmt->execute();
         $result = $stmt->get_result();
-        while ($row = $result->fetch_assoc()) {
-            
-        }
+        echo '
+            <div class="container mt-4">
+                <div class="row">';
+                    while ($row = $result->fetch_assoc()) {
+                        echo '
+                            <div class="col-md-3 col-xl-3">
+                                <div class="card selectable mb-4" style="border-radius: 15px;" data-price="5">
+                                    <div class="bg-image hover-overlay ripple ripple-surface ripple-surface-light" data-mdb-ripple-color="light">
+                                        <img src="https://static.vecteezy.com/system/resources/previews/020/413/410/original/isometric-expert-team-for-data-analysis-business-statistic-management-consulting-marketing-landing-page-template-concept-suitable-for-diagrams-infographics-and-other-asset-vector.jpg" style="border-top-left-radius: 15px; border-top-right-radius: 15px;" class="img-fluid" alt="Laptop" />
+                                        <a href="#!">
+                                            <div class="mask"></div>
+                                        </a>
+                                    </div>
+                                    <div class="card-body pb-0">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <p><a href="#!" class="text-dark">' . $row['thematic_area'] . '</a></p>
+                                                <p class="small text-muted">Courses</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr class="my-0" />
+                                    <hr class="my-0" />
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center pb-2 mb-1">
+                                            <button type="button" class="btn btn-sm btn-outline-success">Select</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>';
+                        }
+                    echo '
+                </div>
+            </div>';
         $stmt->close();
     } catch (Exception $e) {
         // Handle exception
     }
 }
+
