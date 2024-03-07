@@ -143,6 +143,13 @@ function retrieveId($event, $conn)
 }
 
 
+/**
+ * Retrieve the course ID based on the event and database connection.
+ *
+ * @param mixed $event The event data containing the thirdPartyId
+ * @param object $conn The database connection
+ * @return mixed|null The retrieved course ID or null if not found
+ */
 function retrieveCourseId($event, $conn)
 {
     $Init_Id = $event['thirdPartyId'];
