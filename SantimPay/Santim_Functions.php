@@ -89,7 +89,6 @@ function generatePaymentURL($data, $conn)
  */
 function retrieveId($event, $conn)
 {
-    $applicantsIds = [];
     $Txn_Id = $event['txnId'];
     $Via = $event['paymentVia'];
     $Status = $event['Status'];

@@ -1,6 +1,6 @@
 <?php
 
-require_once('conncection.php');
+require_once('connection.php');
 
 /**
  * Retrieves the session information from the database and checks if the session is valid.
@@ -53,7 +53,8 @@ function redirectUserToLogin($trueSession)
         // Output the Bootstrap modal when the user is not allowed on the page
         echo '
         <head>
-             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         </head>
             <div class="modal fade" id="notAllowedModal" tabindex="-1" aria-labelledby="notAllowedModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                 <div class="modal-dialog modal-dialog-centered">
@@ -70,7 +71,6 @@ function redirectUserToLogin($trueSession)
                     </div>
                 </div>
             </div>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
             <script>
@@ -311,8 +311,8 @@ function fetchCourses($UID, $conn2)
         $stmt->execute();
         $result = $stmt->get_result();
         echo '
-            <div class="container mt-4">
-                <div class="row">';
+            <div class="container bg-primary mt-4">
+                <div class="row container">';
                     while ($row = $result->fetch_assoc()) {
                         echo '
                             <div class="col-md-3 col-xl-3">
