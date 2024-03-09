@@ -31,6 +31,7 @@ function generatePaymentURL($data, $conn)
                 $phone = '+251' . substr($phone, 1);
             }
             $courses = $data['courses'];
+            $moodleUserId = $data['userId'];
             $coursesAsString = json_encode($courses);
 
             // Rest of the code that uses $data as an array
@@ -58,8 +59,8 @@ function generatePaymentURL($data, $conn)
             $idAsString = (string) $id;
 
             // Prepare an INSERT statement to add the new ID to the database
-            $stmt = $conn->prepare("INSERT INTO transaction_sp (Initiation_Id, Phone, Amount, Reason, Courses) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param('issss', $id, $phone, $data['totalCost'], $Reason, $coursesAsString);
+            $stmt = $conn->prepare("INSERT INTO transaction_sp (Initiation_Id, MoodleUserId, Phone, Amount, Reason, Courses) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param('iissss', $id, $moodleUserId, $phone, $data['totalCost'], $Reason, $coursesAsString);
 
             if ($stmt->execute()) {
                 // Generate the payment URL

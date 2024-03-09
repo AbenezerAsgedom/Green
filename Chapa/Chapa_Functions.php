@@ -27,17 +27,12 @@ function generatePaymentURL($data, $conn, $conn2)
         throw new Exception("User ID is missing or invalid in payment data.");
     }
 
-    $department = filter_var($data['department'] ?? null, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    if ($department === false || $department === '') {
-        throw new Exception("Department is missing or invalid in payment data.");
-    }
-
     $phone = filter_var($data['phoneNumber'] ?? null, FILTER_SANITIZE_NUMBER_INT);
     if ($phone === false) {
         throw new Exception("Phone number is missing or invalid in payment data.");
     }
 
-    $subject = json_encode(array_map('filter_var', array_diff_key($data, array_flip(['totalCost', 'userId', 'department', 'phoneNumber', 'terms'])), array_fill(0, count(array_diff_key($data, array_flip(['totalCost', 'userId', 'department', 'phoneNumber', 'terms']))), FILTER_SANITIZE_STRING)));
+    $subject = json_encode(array_map('filter_var', array_diff_key($data, array_flip(['totalCost', 'userId', 'phoneNumber', 'terms'])), array_fill(0, count(array_diff_key($data, array_flip(['totalCost', 'userId', 'phoneNumber', 'terms']))), FILTER_SANITIZE_STRING)));
 
     // Assuming you already have an active mysqli connection object named $conn
     $query = "SELECT firstname, lastname, email FROM mdlwj_user WHERE id = ?";
@@ -57,7 +52,6 @@ function generatePaymentURL($data, $conn, $conn2)
         throw new Exception("No row found in the database for the provided user ID.");
     }
 
-    $fullname = $firstname . " " . $lastname;
     $postData->amount($amount)
         ->currency('ETB')
         ->email($email)
@@ -67,16 +61,15 @@ function generatePaymentURL($data, $conn, $conn2)
         ->returnUrl('https://green.et')
         ->customizations(
             array(
-                'customization[title]' => 'green.et',
-                'customization[description]' => 'Payment for ' . $department . " " . $subject
+                'customization[title]' => 'green.et'
             )
         );
 
     $response1 = $chapa->initialize($postData);
     $checkoutUrl = $response1->getData()->checkout_url;
 
-    $stmt = $conn->prepare("INSERT INTO transaction_chapa (MoodleUserId, Fullname, Txn_Id, Phone, Department, Courses, Reason, Amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param('isssssd', $userId, $fullname, $transactionRef, $phone, $department, $subject, 'Payment for ' . $department . " " . $subject, $amount);
+    $stmt = $conn->prepare("INSERT INTO transaction_chapa (MoodleUserId, Txn_Id, Phone, Courses, Amount) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param('issss', $userId, $transactionRef, $phone, $subject, $amount);
     $stmt->execute();
     $stmt->close();
 
