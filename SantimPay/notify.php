@@ -11,7 +11,6 @@ try {
         $courses = retrieveCourseId($event, $conn);
         $initiationId = $event['thirdPartyId'];
 
-        // Access each applicantId value and perform your desired action
         foreach ($courses as $courseId) {
             $enrolStudents = enrolStudent($id, $courseId, $conn2);
             if (!$enrolStudents) {

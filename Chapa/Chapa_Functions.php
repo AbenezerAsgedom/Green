@@ -97,7 +97,7 @@ function retrieveCourseId($data, $conn)
 {
     $Init_Id = $data['tx_ref'];
     if ($Init_Id !== null) {
-        $selectStmt = $conn->prepare("SELECT Courses FROM transaction_sp WHERE Txn_Id = ?");
+        $selectStmt = $conn->prepare("SELECT Courses FROM transaction_chapa WHERE Txn_Id = ?");
         $selectStmt->bind_param("s", $Init_Id);
         $selectStmt->execute();
         $selectResult = $selectStmt->get_result();
