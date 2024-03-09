@@ -80,68 +80,6 @@ function generatePaymentURL($data, $conn)
     return null;
 }
 
-/**
- * Retrieve the ID from the event data and update the transaction in the database.
- *
- * @param mixed $event The event data containing transaction information
- * @param object $conn The database connection
- * @throws Exception If the SQL query execution fails
- */
-function retrieveId($event, $conn)
-{
-    $Txn_Id = $event['txnId'];
-    $Via = $event['paymentVia'];
-    $Status = $event['Status'];
-    $Init_Id = $event['thirdPartyId'];
-
-    $applicantIds = array(); // Array to store applicantIds
-
-    $stmt = $conn->prepare("UPDATE transaction_sp
-    SET Via = ?, Status = ?, Txn_Id = ?
-    WHERE Initiation_Id = ?");
-
-    $stmt->bind_param("ssss", $Via, $Status, $Txn_Id, $Init_Id);
-
-    if ($stmt->execute()) {
-        $selectStmt = $conn->prepare("SELECT applicantId FROM transaction_sp WHERE Initiation_Id = ?");
-        $selectStmt->bind_param("s", $Init_Id);
-        $selectStmt->execute();
-        $selectResult = $selectStmt->get_result();
-
-        if ($selectResult->num_rows > 0) {
-            while ($row = $selectResult->fetch_assoc()) {
-                // $applicantIdData = $row['applicantId'];
-
-                // Check if the "applicant" key exists
-                if (isset($row)) {
-                    // $applicants = $applicantIdData['applicant'];
-                    // Iterate over the values
-                    $row = json_decode($row['applicantId'], true);
-                    foreach ($row as $index => $applicant) {
-                        // Add the applicantId to the array
-                        $applicantIds[] = $applicant;
-                    }
-                } else {
-                    // The "applicant" key does not exist
-                    echo "No 'applicant' key found in the JSON data.";
-                }
-            }
-        } else {
-            // No rows found with the given Initiation_Id
-            echo "No applicant found with the given Initiation ID.";
-        }
-
-        $selectStmt->close();
-    }
-
-    $stmt->close();
-
-    $jsonApplicantIds = json_encode($applicantIds);
-
-    // Return the JSON-encoded string
-    return $jsonApplicantIds;
-}
-
 
 /**
  * Retrieve the course ID based on the event and database connection.
