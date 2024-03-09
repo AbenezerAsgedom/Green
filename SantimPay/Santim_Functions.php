@@ -31,9 +31,6 @@ function generatePaymentURL($data, $conn)
                 $phone = '+251' . substr($phone, 1);
             }
             $courses = $data['courses'];
-            $applicantId = $data['applicantId'];
-            $applicantId = json_encode($applicantId);
-            $newId = $data['newId'];
             $coursesAsString = json_encode($courses);
 
             // Rest of the code that uses $data as an array
@@ -61,8 +58,8 @@ function generatePaymentURL($data, $conn)
             $idAsString = (string) $id;
 
             // Prepare an INSERT statement to add the new ID to the database
-            $stmt = $conn->prepare("INSERT INTO transaction_sp (Initiation_Id, RequestId, applicantId, Phone, Amount, Reason, Courses) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param('iisssss', $id, $newId, $applicantId, $phone, $data['totalCost'], $Reason, $coursesAsString);
+            $stmt = $conn->prepare("INSERT INTO transaction_sp (Initiation_Id, Phone, Amount, Reason, Courses) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param('issss', $id, $phone, $data['totalCost'], $Reason, $coursesAsString);
 
             if ($stmt->execute()) {
                 // Generate the payment URL
