@@ -4,7 +4,6 @@ require_once('index.php');
 
 /**
  * Generate a payment URL using the provided data and connection.
- *
  * @param mixed $data The data used to generate the payment URL.
  * @param mixed $conn The database connection.
  * @return string|null The generated payment URL or null if the data is invalid.
@@ -81,7 +80,6 @@ function generatePaymentURL($data, $conn)
 
 /**
  * Retrieve the course ID based on the event and database connection.
- *
  * @param mixed $event The event data containing the thirdPartyId
  * @param object $conn The database connection
  * @return mixed|null The retrieved course ID or null if not found
