@@ -81,7 +81,6 @@ function generatePaymentURL($data, $conn, $conn2)
 
 /**
  * Retrieve the course ID from the database based on the transaction reference.
- *
  * @param array $data The data containing the transaction reference.
  * @param object $conn The database connection object.
  * @return array|null The array of courses or null if no courses are found.
