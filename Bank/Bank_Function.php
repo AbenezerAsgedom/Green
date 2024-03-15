@@ -20,7 +20,7 @@ function request($userId, $Courses, $conn){
         
         $status = null;
         if($row){
-            $query = "UPDATE transaction_bank SET MoodleUserId=?, Courses=?, Timestamp=NOW() WHERE MoodleUserId=? AND Status=?";
+            $query = "UPDATE transaction_bank SET MoodleUserId=?, Courses=? WHERE MoodleUserId=? AND Status=?";
             $stmt = $conn->prepare($query);
             $stmt->bind_param('isis', $userId, $Courses, $userId, $status);
             if ($stmt->execute()) {
@@ -29,10 +29,10 @@ function request($userId, $Courses, $conn){
                 return false;
             }
         }else{
-            $query = "INSERT INTO transaction_bank (MoodleUserId, Courses, Timestamp, Status) VALUES (?, ?, NOW())";
+            $query = "INSERT INTO transaction_bank (MoodleUserId, Courses) VALUES (?, ?)";
             $stmt = $conn->prepare($query);
             $stmt->bind_param('is', $userId, $Courses);
-            if ($stmt->execute()) {
+            if ($stmt->execute()) { 
                 return true;
             } else {
                 return false;
@@ -81,19 +81,32 @@ function retrieve($userId, $conn){
  */
 function remove($conn){
     $timestamp = date("Y-m-d H:i:s", strtotime('-48 hours'));
-    $query = "DELETE FROM transaction_bank WHERE Status IS NULL AND Timestamp < ?";
+    $query = "SELECT COUNT(*) as cnt FROM transaction_bank WHERE Status IS NULL AND Timestamp < ?";
     try {
         $stmt = $conn->prepare($query);
         $stmt->bind_param('s', $timestamp);
         if($stmt->execute()){
-            //do nothing
-        }
-        else{
-            throw new Exception("Error executing SQL query: " . $stmt->error);
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+            if ($row['cnt'] > 0) {
+                $delete_query = "DELETE FROM transaction_bank WHERE Status IS NULL AND Timestamp < ?";
+                $delete_stmt = $conn->prepare($delete_query);
+                $delete_stmt->bind_param('s', $timestamp);
+                if ($delete_stmt->execute()) {
+                    // do nothing
+                } else {
+                    throw new Exception("Error executing SQL query: " . $delete_stmt->error);
+                }
+            }
+        } else {
+            if ($stmt->error) {
+                throw new Exception("Error executing SQL query: " . $stmt->error);
+            }
         }
     } catch (Exception $e) {
         echo 'Caught exception: ',  $e->getMessage(), "\n";
     }
 }
+
 
 
