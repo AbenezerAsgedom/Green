@@ -9,7 +9,8 @@ $data = json_decode($body, true);
 if (isset($data) && $data !== null) {
     $userId = $data['userId'];
     $courses = $data['courses'];
-    $request = request($userId, $courses, $conn);
+    $amount = $data['amount'];
+    $request = request($userId, $courses, $amount, $conn);
     if($request){
         echo json_encode(array('success' => true));
     }
